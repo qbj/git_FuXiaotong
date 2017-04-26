@@ -1,4 +1,4 @@
-# FuXiaotong
+# Hi, Im FuXiaotong, a growing Data Scientist.
 # This is the workspace for Myself
 
  I divided it into 4 parts:
