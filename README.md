@@ -2,6 +2,7 @@
 # This is the workspace for Myself
 
  I divided it into 4 parts:
+ 
 1.Data Engine
   - To study how to make good data. e.g. data sourcing, data clean, ETL...
 2.Data Analysis
