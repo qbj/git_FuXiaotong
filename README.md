@@ -6,8 +6,7 @@ Data are the source of our knowledge, knowing it better means becoming a wiser p
 Welcome you to discover the truth behind the data with me.
 
 
-
- ##This repo has 4 parts:
+## This repo has 4 parts:
 
 1.Data Engine
   - To study how to make good data. e.g. data sourcing, data clean, ETL...
