@@ -7,7 +7,7 @@ Welcome you to discover the truth behind the data with me.
 
 
 
- I divided it into 4 parts:
+ ##This repo has 4 parts:
 
 1.Data Engine
   - To study how to make good data. e.g. data sourcing, data clean, ETL...
