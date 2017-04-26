@@ -1,6 +1,6 @@
 # Hi, Im FuXiaotong, a growing Data Scientist.
-# This is the workspace for Myself
 
+This is the workspace for Me.
 
 Data are the source of our knowledge, knowing it better means becoming a wiser person. 
 Welcome you to discover the truth behind the data with me.
