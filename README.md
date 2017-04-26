@@ -2,8 +2,9 @@
 # This is the workspace for Myself
 
 
-#Data are the source of our knowledge, knowing it better means becoming a wiser person. 
-#Welcome you to discover the truth behind the data with me.
+Data are the source of our knowledge, knowing it better means becoming a wiser person. 
+Welcome you to discover the truth behind the data with me.
+
 
 
  I divided it into 4 parts:
