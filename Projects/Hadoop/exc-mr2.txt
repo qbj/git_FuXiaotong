@@ -1,0 +1,447 @@
+Task 1 code begin
+
+#mapper.py
+#!/usr/bin/python
+import sys
+import os
+
+file_name = str(os.getenv('map_input_file'))     #get file directory
+file_name = file_name.split('/')[-1]      #get file name
+
+for line in sys.stdin:
+    tline = str(line.strip())
+    line = tline
+
+    len_line = len(tline)
+    #eliminate all non-alphabet and non-number from lines
+    for i in range(0,len_line):
+        if (tline[i]<'0' or tline[i] >'9') and (tline[i]<'a' or tline[i]>'z') and (tline[i]<'A' or tline[i]>'Z'):
+            line = line.replace(tline[i],' ')
+
+    line = line.split()
+    count={}
+    #count term frequency for each line
+    for item in line:
+        if item in count:
+            count[item]+=1
+        else:
+            count[item] = 1
+
+    #emit 'term_name, file_name, frequency_in_current_line'
+    for item in count:
+        print('%s,%s,%d' % (item,file_name,count[item]))
+    count.clear()
+
+#reducer.py
+#!/usr/bin/python
+from operator import itemgetter
+import sys
+
+
+pre_term=''
+pre_file=''
+n_doc=0
+n_term=0
+
+for line in sys.stdin:
+    line = line.strip()
+    #print line
+
+    key,value = line.split(',',1)
+    term = key
+    file_name, count = value.split()
+    count = int(count)
+
+    #print term,file_name,count
+
+    if term != pre_term:        #move to a new term
+        if n_doc!=0:        #if n_doc==0, it indicates that in this reducer there is no key,value pair, and we don't emit initial pre_term
+            part2 += str(n_term) + ')}'
+            print(part1 + str(n_doc) + part2)        #emit result
+        part1 = term + ': '
+        part2 = ': {(' + file_name + ', '
+        n_doc=1     #when move to a new term, the number of documents containing the term becomes 1
+        pre_term = term
+        pre_file = file_name
+        n_term = count      #frequency of the word in current file becomes 'count'
+
+    else:       #the same term
+        if file_name != pre_file:       #move to a new file(document)
+            part2 += str(n_term) + '), (' + file_name +', '
+            pre_file = file_name
+            n_term = count      #move to another file, frequency becomes count
+            n_doc += 1      #move to a new file, the number of documents increases
+        else:       #merge frequency in the same file
+            n_term += count
+
+if n_doc!=0:        #if n_doc==0, it indicates that in this reducer there is no key,value pair, and we don't emit initial pre_term
+    part2 += str(n_term) + ')}'
+    print(part1 + str(n_doc) + part2)        #emit result
+
+#command
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=10 -partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner -jobconf stream.map.output.field.separator=, -jobconf stream.num.map.output.key.fields=2 -jobconf map.output.key.field.separator=, -jobconf num.key.fields.for.partition=1 -input /user/s1250553/ex2/task1/large/ -output /user/s1421412/task_1.out -mapper ~/s2task1/mapper.py -file ~/s2task1/mapper.py -reducer ~/s2task1/reducer.py -file ~/s2task1/reducer.py
+
+Task 1 code end
+
+Task 1 results begin
+
+105: 3: {(d10.txt, 4), (d11.txt, 1), (d4.txt, 2)}	
+114: 3: {(d10.txt, 5), (d11.txt, 2), (d4.txt, 2)}	
+123: 3: {(d10.txt, 1), (d11.txt, 5), (d4.txt, 2)}	
+13: 6: {(d10.txt, 3), (d11.txt, 6), (d12.txt, 1), (d3.txt, 2), (d4.txt, 2), (d7.txt, 3)}	
+132: 1: {(d10.txt, 1)}	
+13th: 1: {(d10.txt, 11)}	
+141: 2: {(d10.txt, 8), (d11.txt, 1)}	
+1494: 1: {(d11.txt, 1)}	
+150: 2: {(d10.txt, 5), (d8.txt, 1)}	
+1610: 1: {(d4.txt, 2)}	
+
+Task 1 results end
+
+
+Task 2 code begin
+
+#mapper.py
+#!/usr/bin/python
+import sys
+import math
+
+N = 17    #get total number of files in the corpus, use linux command 'ls | wc -l'
+file_name = 'd1.txt'
+
+#get terms set from file terms.txt
+terms = set()
+for line in file('terms.txt'):
+    terms.add(line[:-1])
+
+for line in sys.stdin:
+    #get term from each result from task1
+    term, value = line.split(':',1)
+    if term in terms:
+        #get n_doc the number of documents where the term appears
+        n_doc,value = value.split(':',1)
+        n_doc = int(n_doc)
+        value = str(value)
+        # check whether d1 contains the term
+        if value.find(file_name)>0:
+            index_file = value.find(file_name)
+            file_name,value = value[index_file:].split(',',1)
+            #retrieve the frequency of the term in file d1.txt
+            tf,value = value.split(')',1)
+            tf = float(tf)
+            idf = math.log(N/(1.0+n_doc),10)
+            #compute tf idf
+            tf_idf = tf * idf
+        else:
+            #if no d1.txt appear, means tf==0, so tf_idf==0
+            tf_idf = 0
+        print('%s, %s = %f' % (term,file_name,tf_idf))
+
+#reducer.py
+#!/usr/bin/python
+from operator import itemgetter
+import sys
+
+for line in sys.stdin:
+    print line.strip()
+
+#command
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=10 -input /user/s1421412/task_1.out -output /user/s1421412/task_2.out -mapper ~/s2task2/mapper.py -file ~/s2task2/mapper.py -reducer ~/s2task2/reducer.py -file ~/s2task2/reducer.py -file ~/s2task2/terms.txt
+
+Task 2 code end
+
+Task 2 results begin
+
+child, d1.txt = 2.632894	
+agreement, d1.txt = 2.125916	
+Lassiter, d1.txt = 0.000000	
+family, d1.txt = 1.576372	
+monument, d1.txt = 0.770702	
+horse, d1.txt = 2.951231	
+
+Task 2 results end
+
+
+Task 3(question 1) code begin
+
+#there are 2 MapReduce, 1st is to count the frequencies of pages, 2nd is to get the top 1
+#mapper.py
+#!/usr/bin/python
+import sys
+
+
+for line in sys.stdin:
+    line = line.strip()
+    parts = line.split()
+    print parts[-4]
+
+#reducer.py
+#!/usr/bin/python
+from operator import itemgetter
+import sys
+
+pre_line=''
+for line in sys.stdin:
+    line = line.strip()
+    if line!=pre_line:
+        if pre_line!='':
+            print pre_line,count
+        pre_line = line
+        count = 1
+    else:
+        count += 1
+
+if pre_line!='':
+    print pre_line,count
+
+#mapper2.py
+#!/usr/bin/python
+
+import sys
+
+#sort lines by the frequencies of pages
+
+maxnum = 1000000        #use a large number to get each count's difference, set differences as keys to be sorted
+
+for line in sys.stdin:
+    line=line.strip()
+    host, count = line.split()
+    count = int(count)
+    dif= maxnum-count       #difference
+    print "%s\t%s" % (dif, host)
+
+#reducer2.py
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+maxnum = 1000000
+outputCount=0       #use it to record the first lines
+
+for line in sys.stdin:
+    line = line.strip()
+    dif,host = line.split()
+    dif = int(dif)
+    count = maxnum - dif        #decode
+    if outputCount<1:
+        print "%s\t%s" % (host,count)
+    outputCount+=1
+
+#command
+1.
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=10 -input /user/s1250553/ex2/task2/logsLarge.txt -output /user/s1421412/task_3_1.out1  -mapper ~/s2task31/mapper.py -file ~/s2task31/mapper.py -reducer ~/s2task31/reducer.py -file ~/s2task31/reducer.py
+
+2.
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=10 -input /user/s1421412/task_3_1.out1 -output /user/s1421412/task_3_1.out2  -mapper ~/s2task31/mapper2.py -file ~/s2task31/mapper2.py -reducer ~/s2task31/reducer2.py -file ~/s2task31/reducer2.py
+
+3.
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=1 -input /user/s1421412/task_3_1.out2 -output /user/s1421412/task_3_1.out3  -mapper ~/s2task31/mapper2.py -file ~/s2task31/mapper2.py -reducer ~/s2task31/reducer2.py -file ~/s2task31/reducer2.py
+
+Task 3(question1) code end
+
+Task 3(question1) results begin
+
+/images/NASA-logosmall.gif	97267
+
+Task 3(question1) results end
+
+
+Task 3(question2) code begin
+
+#here are 2 mapreduces, 1st is to get the frequencies of hosts produced 404, 2nd is to get the top10
+#mapper.py
+#!/usr/bin/python
+import sys
+
+#1st time mapreduce produces hosts, frequencies
+#2nd time produces top 10 frequencies 404 hosts of each reducers
+#3rd time, as the input data scale is limited, use 1 single reduce to repeat 2nd mapreduce to get top 10 404 hosts
+
+for line in sys.stdin:
+    line = str(line.strip())
+    parts = line.split()
+    host = parts[0]
+    code = parts[-2].strip()
+    if code == '404':
+        print host
+
+#reducer.py
+#!/usr/bin/python
+from operator import itemgetter
+import sys
+
+pre_host=''
+for line in sys.stdin:
+    line = line.strip()
+    if line != pre_host:
+        if pre_host != '':
+            print pre_host,count
+        count = 1
+        pre_host = line
+    else:
+        count += 1
+
+if pre_host != '':
+    print pre_host,count
+
+#mapper2.py
+#!/usr/bin/python
+
+import sys
+
+#sort count of 404 host so top 10 is the first 10 lines
+#use MapReduce1's output as input here, mapreduce twice, first time set 10(or any other number) reducers, and 2nd time 1 reducer
+
+maxnum = 1000000        #use a large number to get each count's difference, set differences as keys to be sorted
+
+for line in sys.stdin:
+    line=line.strip()
+    host, count = line.split()
+    count = int(count)
+    dif= maxnum-count       #difference
+    print "%s\t%s" % (dif, host)
+
+#reducer2.py
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+maxnum = 1000000
+outputCount=0       #use it to record the first 10 lines
+
+for line in sys.stdin:
+    line = line.strip()
+    dif,host = line.split()
+    dif = int(dif)
+    count = maxnum - dif        #decode
+    if outputCount<10:
+        print "%s\t%s" % (host,count)
+    outputCount+=1
+
+#command
+1.get 404 hosts and their frequencies
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=10 -input /user/s1250553/ex2/task2/logsLarge.txt -output /user/s1421412/task_3_2.out1  -mapper ~/s2task32/mapper.py -file ~/s2task32/mapper.py -reducer ~/s2task32/reducer.py -file ~/s2task32/reducer.py
+
+2.get top 10 of each reducer
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=10 -input /user/s1421412/task_3_2.out1 -output /user/s1421412/task_3_2.out2  -mapper ~/s2task32/mapper2.py -file ~/s2task32/mapper2.py -reducer ~/s2task32/reducer2.py -file ~/s2task32/reducer2.py
+
+3.get top 10 404 hosts
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=1 -input /user/s1421412/task_3_2.out2 -output /user/s1421412/task_3_2.out3  -mapper ~/s2task32/mapper2.py -file ~/s2task32/mapper2.py -reducer ~/s2task32/reducer2.py -file ~/s2task32/reducer2.py
+
+Task 3(question2) code end
+
+Task 3(question2) results begin
+
+dialip-217.den.mmc.com	62
+piweba3y.prodigy.com	47
+155.148.25.4	44
+maz3.maz.net	39
+gate.barr.com	38
+ts8-1.westwood.ts.ucla.edu	37
+204.62.245.32	37
+m38-370-9.mit.edu	37
+nexus.mlckew.edu.au	37
+scooter.pa-x.dec.com	35
+
+Task 3(question2) results end
+
+
+Task 3(question3) code begin
+
+#mapper.py
+#!/usr/bin/python
+import sys
+
+for line in sys.stdin:
+    line = line.strip()
+    parts = line.split()
+    time = parts[3].replace('[','')
+    gmt = parts[4].replace(']','')
+    print '%s!%s %s' % (parts[0],time,gmt)
+
+#reducer.py
+#!/usr/bin/python
+from operator import itemgetter
+import sys
+import datetime
+
+#transform time data to formal python datetime type
+def get_datetime(ss):
+    time1,timezone = ss.split()     #time1 = time(e.g.02/Jun/2014 00:00:01), timezone = '+0400'
+    dtime = datetime.datetime.strptime(time1,"%d/%b/%Y:%H:%M:%S")       #get local time
+    d0 = datetime.timedelta(hours=0)        #get time in 0 timezone
+    d = datetime.timedelta(hours=int(timezone)/100)     #get time in input timezone
+    dtime = dtime + (d-d0)      #decrease timezone differences
+    return dtime
+
+#main
+#differences are shown in the form of 'seconds'
+pre_host=''
+
+for line in sys.stdin:
+    line = line.strip()
+
+    host,time = line.split('!',1)
+    time = get_datetime(time)       #tranfor time format
+
+    if host!=pre_host:      #when moving to the different host, emit last computed time difference
+        if pre_host!='':
+            if last_time==first_time:       #first_time is the minimal(earliest) time in one host's all times, last_time is the max
+                print '%s\t%s' % (pre_host,last_time)
+            else:
+                print '%s\t%s' % (pre_host,(last_time-first_time).seconds)
+        pre_host = host
+        first_time = time
+        last_time = time
+    else:
+        if time<first_time:
+            first_time = time
+        if time>last_time:
+            last_time = time
+
+#print last host
+if pre_host!='':
+    if last_time==first_time:
+        print '%s\t%s' % (pre_host,last_time)
+    else:
+        print '%s\t%s' % (pre_host,(last_time-first_time).seconds)
+
+#command
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=10 -partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner -jobconf map.output.key.field.separator=! -jobconf num.key.fields.for.partition=1 stream.map.output.field.separator=! -jobconf stream.num.map.output.key.fields=1 -input /user/s1250553/ex2/task2/logsLarge.txt -output /user/s1421412/task_3_3.out  -mapper ~/s2task33/mapper.py -file ~/s2task33/mapper.py -reducer ~/s2task33/reducer.py -file ~/s2task33/reducer.py 
+
+Task 3(question3) code end
+
+Task 3(question3) results begin
+# unit of differences is 'second'
+
+02-17-05.comsvc.calpoly.edu	182
+1.ts2.mnet.medstroms.se	81987
+101.irri.cgiar.org	45
+12-105da.acs.calpoly.edu	799
+121.27.inmarsat.org	12
+128.100.87.74	42
+128.100.95.2	1995-08-13 09:59:50
+128.102.142.245	11
+128.102.143.217	81853
+128.102.146.223	80437
+
+Task 3(question3) results end
+
+
+Task 4 code begin
+
+#mapper.py
+
+#reducer.py
+
+#command
+
+Task 4 code end
+
+Task 4 results begin
+
+Task 4 results end
+
+

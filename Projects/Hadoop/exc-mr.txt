@@ -1,0 +1,637 @@
+Task 1 code begin
+
+#mapper.py
+#!/usr/bin/python
+import sys
+
+for line in sys.stdin:
+
+#read every line and strip it
+    line = line.strip()
+    print (line)
+
+#reducer.py
+#!/usr/bin/python
+from operator import itemgetter
+import sys
+
+for line in sys.stdin:
+    line = line.strip()
+#lower() function makes all letters lower
+    print (line.lower())
+
+#command
+
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -input /user/s1250553/ex1/webLarge.txt -output /user/s1421412/task_1.out -mapper ~/task1/mapper.py -file ~/task1/mapper.py -reducer ~/task1/reducer.py -file ~/task1/reducer.py
+
+
+Task 1 code end
+
+Task 1 results begin
+
+0 0 pattern found in languages like	
+0 0 solid	
+0 1	
+0 1 0	
+0 1 is 2 is 4 always 7 activesync features default 0 msexchomaadminwirelessenable select	
+0 400px solid	
+0 5 should be 5 should be 4 because the next allowed digit going in the reverse direction it be since out of following along by that must be easiest way to think of how it will work is that you keep adding or subtracting 5 until the number falls between 0 and 5 not sure about machine dependence never seen an implementation that but i say never	
+0 8 bit unsigned so allows 255 zero empty other 255 the 255 is very different to sql server always pads the data if not is no difference between and unless you want to index where you have a limit of 900 server before 7 had varchar limit of 255 and no unicode that was a	
+0 as will return datatype which in is just a synonym for that it will not work when is a will return as but since your question only mentions zeros and positive i post this without	
+0 limit is precalculated in php random from 1 to of active and the result consists of 6	
+
+Task 1 results end
+
+Task 2 code begin
+
+#mapper.py
+#!/usr/bin/python
+
+import sys
+
+for line in sys.stdin:
+    line = line.strip()
+    print line.lower() #convert to lower-case
+
+#reducer.py
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+tline=""
+for line in sys.stdin:
+    line = line.strip()
+#the duplicate lines should close to each other, if we find a different line then output, or just skip it to the next line
+    if(line!=tline):
+        tline = line
+        print tline
+
+#command
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -input /user/s1250553/ex1/webLarge.txt -output /user/s1421412/task_2.out -mapper ~/task2/mapper.py -file ~/task2/mapper.py -reducer ~/task2/reducer.py -file ~/task2/reducer.py
+
+Task 2 code end
+
+Task 2 results begin
+
+0 0 pattern found in languages like	
+0 0 solid	
+0 1	
+0 1 0	
+0 400px solid	
+0 5 should be 5 should be 4 because the next allowed digit going in the reverse direction it be since out of following along by that must be easiest way to think of how it will work is that you keep adding or subtracting 5 until the number falls between 0 and 5 not sure about machine dependence never seen an implementation that but i say never	
+0 a b b sure about this added b you a b b be this would be compiler i do still not see a case where the overflow bug can be	
+0 as will return datatype which in is just a synonym for that it will not work when is a will return as but since your question only mentions zeros and positive i post this without	
+0 do should the function returns a jquery object that contains the so you just need to check the size and see if it has at least one	
+0 do stuff
+
+Task 2 results end
+
+Task 3 code begin
+
+#Here I used 2 times MapReduce
+#First one is to divide the input into 10 parts and get each part's count of lines and words
+#Second one(mapper2.py) is to merge the 10 parts into one file and calculate the total count of lines and words
+#Then use dfs command -mv -rmr to rename finalResult and move it to right place
+
+#calculate 10 parts' lines and words
+#mapper.py
+
+#!/usr/bin/python
+
+import sys
+
+for line in sys.stdin:
+    line = line.strip()
+    print line
+
+#reducer.py
+
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+totalRow = 0
+totalWords = 0
+for line in sys.stdin:
+    totalRow = totalRow + 1
+    words = line.split()
+    totalWords = totalWords + len(words)       #len(words) is the sum of words in a line
+print "%s\t%s" % (totalRow,totalWords)       #use \t as splitter
+
+#mapper2.py
+#!/usr/bin/python
+import sys
+
+for line in sys.stdin:
+    line = line.strip()
+    print line
+
+#reducer2.py
+
+#!/usr/bin/python
+from operator import itemgetter
+import sys
+
+Row = 0        #sum of rows
+Words = 0
+for line in sys.stdin:
+    rowLine,wordsLine = line.split('\t',1)
+    rowLine = int (rowLine)        #sum of row in each part
+    wordsLine = int (wordsLine)        #sum of words in each part
+    Row = Row + rowLine
+    Words = Words + wordsLine
+print "%s %s" % (Row, Words)
+
+#command
+
+Task 3 code end
+
+Task 3 results begin
+
+1897987 123588873	
+187893	12359801
+203227	12355553
+188324	12334338
+188488	12401515
+187795	12323588
+187688	12268501
+188023	12360567
+188278	12363788
+189546	12457891
+
+Task 3 results end
+
+Task 4 code begin
+
+#mapper.py
+#!/usr/bin/python
+
+import sys
+
+for line in sys.stdin:
+    line = line.strip().lower()        #make lower case
+    words = line.split()
+    nword = len(words)        #sum of words in each line
+    if nword >= 3:
+        for i in range(0,nword-2) :
+            newSq = "'"+words[i]+"', '"+words[i+1]+"', '"+words[i+2]+"'"        #get every 3word sequence in each line
+            print newSq       #emit all sequences
+
+#reducer.py
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+firstLine=0      #tline records the former line, judge if tline is first line of input
+countSq=0
+tline=""
+for line in sys.stdin:
+    line = line.strip()
+    if (firstLine==0):
+        tline = line
+        firstLine=1
+    if(line==tline):       #compare each line with its former, if the same, sum of this 3word sequence add 1
+        countSq+=1
+    else:
+        print "%s\t%s" % (tline,countSq)        #if not, all this kind of 3words found, print
+        countSq = 1
+        tline = line
+print "%s\t%s" % (tline,countSq)        #when input ends, print last 3word
+
+#command
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.reduce.tasks=10 -D mapred.map.tasks=10 -input /user/s1250553/ex1/webLarge.txt -output /user/s1421412/task_4.out -mapper ~/task4/mapper.py -file ~/task4/mapper.py -reducer ~/task4/reducer.py -file ~/task4/reducer.py
+
+Task 4 code end
+
+Task 4 results begin
+
+'0', '0', '10000'	1
+'0', '0', '1039'	1
+'0', '0', '111'	1
+'0', '0', '120'	2
+'0', '0', '14'	5
+'0', '0', '16px'	4
+'0', '0', '2097151'	1
+'0', '0', '23'	2
+'0', '0', '256'	3
+'0', '0', '25px'	6
+
+
+Task 4 results end
+
+Task 5 code begin
+
+#mapper with combiner
+#compute 3word sequences' count in several lines
+#!/usr/bin/python
+
+import sys
+
+s=[]        #set s stores all 3words in a line
+
+#combiner
+def combine(s):
+    s=sorted(s)        #make the same 3words together
+    tword=s[0]        #tword mark the same 3 word
+    count=1       #count of a 3word in a line
+    for i in range(1,len(s)):
+        if(tword==s[i]):      #the same seq, add 1
+            count+=1
+        else:
+            print "%s\t%s" % (tword,count)     #when move to a different seq, emit the former sequence
+            count=1
+            tword=s[i]
+    print "%s\t%s" % (tword,count)        #emit last key value
+    s=[]      #clean set after combining
+
+
+for line in sys.stdin:
+    line = line.strip().lower()        #make lower case
+    words = line.split()
+    nword = len(words)        #sum of words in each line
+    cmbCount=0
+    cmbN=20      #threshold of how many lines of words should be combined. Here every 20 lines' words are combined
+    if nword >= 3:
+        for i in range(0,nword-2) :
+            newSq = "'"+words[i]+"', '"+words[i+1]+"', '"+words[i+2]+"'"        #get every 3word sequence in each line
+            s.append(newSq)        #add every 3word into set s
+        if(cmbCount==cmbN):
+            combine(s)        #combine all 3word in a line after initialize it
+            cmbCount=0
+        cmbCount+=1
+combine(s)
+
+#reducer
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+firstLine=0      #tline records the former line, judge if tline is first line of input
+countSq=0
+tline=""
+for line in sys.stdin:
+    line = line.strip()
+    key,value = line.split('\t',1)
+    value = int(value)
+    if (firstLine==0):
+        tline = key
+        firstLine=1
+    if(key==tline):       #compare each line with its former, if the same, sum of this 3word sequence add 1
+        countSq+=value
+    else:
+        print "%s\t%s" % (tline,countSq)        #if not, all this kind of 3words found, print
+        tline = key
+        countSq = value
+print "%s\t%s" % (tline,countSq)        #when input ends, print last 3word
+
+#command
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=10 -input /user/s1250553/ex1/webLarge.txt -output /user/s1421412/task_5.out -mapper ~/task5/mapper.py -file ~/task5/mapper.py -reducer ~/task5/reducer.py -file ~/task5/reducer.py
+
+Task 5 code end
+
+Task 5 results begin
+
+#output is the same, but the new time cost is just slightly faster than old one. Here are the new time and old time
+
+#old time:
+#14/10/21 19:04:28 INFO streaming.StreamJob:  map 0%  reduce 0%
+#14/10/21 19:12:08 INFO streaming.StreamJob:  map 100%  reduce 100%
+#7.40
+#new time:
+#14/10/21 19:27:18 INFO streaming.StreamJob:  map 0%  reduce 0%
+#14/10/21 19:34:09 INFO streaming.StreamJob:  map 100%  reduce 100%
+#6.51
+#output
+'0', '0', '10000'	1
+'0', '0', '1039'	1
+'0', '0', '111'	1
+'0', '0', '120'	2
+'0', '0', '14'	5
+'0', '0', '16px'	4
+'0', '0', '2097151'	1
+'0', '0', '23'	2
+'0', '0', '256'	3
+'0', '0', '25px'	6
+
+Task 5 results end
+
+Task 6 code begin
+
+#mapper.py
+#!/usr/bin/python
+
+import sys
+
+#sort count of sequences so top 20 is the first 20 lines
+#use task4's output as input here, mapreduce twice, first time set 20 reducers, and 2nd time 1 reducer
+
+maxnum = 1000000        #use a large number to get each count's difference, set differences as keys to be sorted
+
+for line in sys.stdin:
+    line=line.strip()
+    word, count = line.split('\t',1)
+    count= str(count)
+    count = int(count)
+    dif= maxnum-count       #difference
+    print "%s\t%s" % (dif,word)
+
+#reducer.py
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+maxnum = 1000000
+outputCount=0       #use it to record the first 20 lines
+
+for line in sys.stdin:
+    line = line.strip()
+    dif,word = line.split('\t',1)
+    dif = int(dif)
+    count = maxnum - dif        #decode
+    if outputCount<20:
+        print "%s\t%s" % (word,count)
+    outputCount+=1
+
+#command
+
+#1st one is to get 20 outputs, 2nd one is to merge and get 1
+
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=20 -D mapred.reduce.tasks=20 -input /user/s1421412/task_4.out -output /user/s1421412/task_6.out -mapper ~/task6/mapper.py -file ~/task6/mapper.py -reducer ~/task6/reducer.py -file ~/task6/reducer.py
+
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=1 -input /user/s1421412/task_6.out -output /user/s1421412/task_6.out2 -mapper ~/task6/mapper.py -file ~/task6/mapper.py -reducer ~/task6/reducer.py -file ~/task6/reducer.py
+
+
+Task 6 code end
+
+Task 6 results begin
+
+'you', 'want', 'to'	92139
+'be', 'able', 'to'	74235
+'you', 'need', 'to'	73446
+'i', 'want', 'to'	70022
+'a', 'lot', 'of'	49044
+'you', 'can', 'use'	44388
+'i', 'need', 'to'	43916
+'you', 'have', 'to'	42092
+'a', 'way', 'to'	41731
+'would', 'like', 'to'	35108
+'to', 'get', 'the'	34273
+'if', 'you', 'want'	34136
+'there', 'is', 'a'	34120
+'to', 'use', 'the'	32669
+'to', 'create', 'a'	32174
+'way', 'to', 'do'	31264
+'at', 'at', 'at'	31234
+'i', 'have', 'a'	29698
+'you', 'have', 'a'	29681
+'one', 'of', 'the'	29159
+
+Task 6 results end
+
+Task 7 code begin
+
+#mapper.py
+#!/usr/bin/python
+
+import sys
+
+for line in sys.stdin:
+    line = line.strip()
+    xx,line2 = line.split('\t',1)
+    line=line2
+    yy=0        #a new line begins,columns reset
+    numbers = line.split()
+    for value in numbers:
+        yy+=1
+        key = str(yy).zfill(5)+','+str(xx).zfill(5)       #exchange xx and yy, let mapper sort it with yy
+        print "%s\t%s" % (key,value)
+
+#reducer.py
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+prekey1=""      #when position of row changed, output move to the next line
+firstLineflag=1
+
+for line in sys.stdin:
+    line = line.strip()
+    key,value = line.split()
+    key1,key2 = key.split(',',1)        #key1 is transposed row number, key2 is transposed col number
+    if(firstLineflag==1):       #record first row number
+        prekey1 = key1
+        firstLineflag = 0
+    if(key1!=prekey1):      #if enter a new row, 'Enter'
+        print
+        prekey1=key1
+    print value,
+
+#command
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -D mapred.map.tasks=10 -D mapred.reduce.tasks=1 -input /user/s1250553/ex1/matrixLarge.txt -output /user/s1421412/task_7.out -mapper ~/task7/mapper.py -file ~/task7/mapper.py -reducer ~/task7/reducer.py -file ~/task7/reducer.py
+
+Task 7 code end
+
+Task 7 results begin
+
+#heads of top 10 lines
+0 0 8 5 4 0 4 0 9 7 6 1 8 3 3 5 4 9 9 9 7 8 6 0 0 7 4 8 ...
+4 7 5 2 3 3 4 2 8 5 9 9 4 3 1 4 4 8 0 0 7 7 3 0 8 5 9 7 5 7 8 ...
+5 4 6 4 7 6 1 9 8 6 9 0 6 8 0 1 7 3 5 2 5 4 2 4 5 3 8 7 2 5 6 ...
+5 2 3 8 9 9 9 8 7 1 7 5 4 1 6 6 5 2 3 1 6 6 2 7 9 8 ...
+4 6 7 8 0 8 7 9 2 9 2 8 7 5 7 6 8 3 7 8 0 2 6 3 5 1 2 7 3 4 7 8 7 8 5 2 ...
+3 2 9 2 3 0 8 0 4 6 2 4 5 1 5 2 3 3 7 0 5 6 9 2 5 2 3 5 3 4 1 9 1 8 6 ...
+6 9 7 5 6 2 5 4 8 4 5 7 9 4 7 7 2 9 4 5 0 8 2 3 9 1 2 8 3 8 5 3 5 0 2 3 4 9 5 2 8 8 8 ...
+0 5 8 1 2 2 0 0 3 6 3 9 8 6 8 7 2 9 0 8 0 6 0 4 6 0 6 2 7 4 1 6 7 8 0 1 3 3 4 8 ...
+7 7 3 5 9 5 6 3 0 3 1 8 3 7 7 2 1 9 6 6 5 9 4 2 8 9 2 9 9 8 3 4 0 6 7 ...
+8 5 7 8 7 0 2 0 7 3 0 5 4 1 9 3 2 8 8 0 9 5 8 0 2 2 6 7 9 9 1 6 9 4 1 3 1 8 1 1 6 8 ...
+
+Task 7 results end
+
+Task 8 code begin
+
+#mapper.py
+#!/usr/bin/python
+
+#use partitioner to make all the same id into the same reducers, and mark 'student record' with 0 and 'mark record' 1
+import sys
+
+for line in sys.stdin:
+    line = line.strip()
+    parts=line.split()
+    if parts[0]=='student':
+        #add separator '.' ,and 0, first separator to make all the same id together, 2nd make name line before course
+        outline=parts[1]+'.'+'0'+'.'+parts[2]       #part2 = name
+    else:
+        outline=parts[2]+'.'+'1'+'.'+parts[1] +'\t' +parts[3]       #part1 =coursename part3=mark
+    print outline
+
+#reducer.py
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+prekey=''       #record information about the former line
+
+for line in sys.stdin:
+    line = line.strip()
+    key,value=line.split('\t',1)        #key= student id plus 0 or 1, value= name or course
+    key1,key2=key.split('.',1)      #key1=student id, key2=0,value=name,key2=1,value=coutse
+    if key2=='0':
+        print
+        print "%s" % (value),
+    else:
+        coursename,mark = value.split('\t',1)
+        if prekey=='0':
+            print "--> (%s,%s)" % (coursename,mark),
+        else:
+            print " (%s,%s)" % (coursename,mark),
+    prekey=key2
+
+#command
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner -jobconf stream.map.output.field.separator=. -jobconf stream.num.map.output.key.fields=2 -jobconf map.output.key.field.separator=. -jobconf num.key.fields.for.partition=1 -input /user/s1250553/ex1/uniLarge.txt -output /user/s1421412/task_8.out2 -mapper ~/task8/mapper.py -file ~/task8/mapper.py -reducer ~/task8/reducer.py -file ~/task8/reducer.py
+
+Task 8 code end
+
+Task 8 results begin
+	
+Alridge	
+Acton --> (IRR,70)  (AV,76)  (BIO1,64)	
+Harry	
+Ackert	
+Brandan	
+Deja	
+Ethan	
+Abner	
+Claudia	
+Kaley	
+
+Task 8 results end
+
+Task 9 code begin
+
+#there are 2 steps, one is mapReduce, get several max average marks and names
+#then use getmerge get output and process it locally, finally upload final result
+
+#mapper.py
+#!/usr/bin/python
+
+#use partitioner to make all the same id into the same reducers, and mark 'student record' with 0 and 'mark record' 1
+import sys
+
+for line in sys.stdin:
+    line = line.strip()
+    parts=line.split()
+    if parts[0]=='student':
+        #add separator '.' ,and 0, first separator to make all the same id together, 2nd make name line before course
+        outline=parts[1]+'.'+'0'+'.'+parts[2]       #part2 = name
+    else:
+        outline=parts[2]+'.'+'1'+'.'+parts[1] +'\t' +parts[3]       #part1 =coursename part3=mark
+    print outline
+
+#reducer.py
+#!/usr/bin/python
+
+from operator import itemgetter
+import sys
+
+
+tMark=0
+maxMark=0
+maxPerson=[]        #record all students whose marks are equal to the max mark
+person=''
+preId=''
+courseCount=0
+
+for line in sys.stdin:
+    line = line.strip()
+    key,value=line.split('\t',1)        #key= student id plus 0 or 1, value= name or course
+    key1,key2=key.split('.',1)      #key1= student id, if key2=0,value=name,if key2=1,value=course
+    if key2=='0':       #student line
+        if courseCount>4:       #when sb. has more than four courses
+            aveMark = tMark/courseCount
+            if aveMark>maxMark:     #if average mark bigger
+                maxPerson=[]
+                maxPerson.append(person)
+                maxMark=aveMark
+            elif aveMark==maxMark:        #if his average mark equal
+                maxPerson.append(person)
+
+        person=value
+        preId = key1
+        courseCount=0       #count courses of a person
+        tMark=0         #count the sum of all courses of a person
+    else:       #course line
+        coursename,mark = value.split('\t',1)
+        courseCount+=1
+        tMark+=int(mark)
+
+
+if key2=='1':       #if end with one student's course record, it could miss last course mark
+    if courseCount>4:
+        aveMark = tMark/courseCount
+        if aveMark>maxMark:
+            maxPerson=[]
+            maxPerson.append(person)
+            maxMark=aveMark
+        elif aveMark==maxMark:
+            maxPerson.append(person)
+for person in maxPerson:
+    print person,
+print ',',maxMark
+
+#local processing
+#get output like:
+#name1 name2 , mark
+file_object = open('task9.in')
+out_object = open('task_9FinalResult.out','w')
+try:
+    maxAve=0
+    maxName=0
+    line=file_object.readline()
+    while line:
+        name,mark=line.split(',',1)
+        mark = int(mark)
+        if mark>maxAve:
+            maxAve=mark
+            maxName=name
+        line=file_object.readline()
+    out_object.write(maxName)
+finally:
+     file_object.close()
+     out_object.close()
+
+#command 1
+hadoop jar contrib/streaming/hadoop-0.20.2-streaming.jar -partitioner org.apache.hadoop.mapred.lib.KeyFieldBasedPartitioner -jobconf stream.map.output.field.separator=. -jobconf stream.num.map.output.key.fields=2 -jobconf map.output.key.field.separator=. -jobconf num.key.fields.for.partition=1 -input /user/s1250553/ex1/uniLarge.txt -output /user/s1421412/task_9.out -mapper ~/task9/mapper.py -file ~/task9/mapper.py -reducer ~/task9/reducer.py -file ~/task9/reducer.py
+
+#command 2
+hadoop dfs -getmerge /user/s1421412/task_9.out/ ~/Desktop/task9.in
+#command 3
+hadoop dfs -copyFromLocal ~/Desktop/task_9FinalResult.out /user/s1421412/
+
+Task 9 code end
+
+Task 9 results begin
+
+#final result:
+Adee 
+
+#temp result:
+Sam , 92	
+Alison , 94	
+Adee , 96	
+Toby Apsey Kaliyah , 92	
+Adkinson , 92	
+Alexander , 93	
+Alvis Rhys , 93	
+Addington , 93	
+Alderton , 94	
+Antill , 95	
+
+Task 9 results end
