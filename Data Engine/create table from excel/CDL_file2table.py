@@ -52,12 +52,13 @@ for i in allFiles:
     create_table_idl_sql += "create table prd_idl.{@table}_idl ( \n"
     create_table_idl_sql += "{@columns} , \n"
     create_table_idl_sql += "    batch_number string \n"
-    create_table_idl_sql += ") \n"
+    create_table_idl_sql += "); \n"
 
     create_table_cdl_sql = "-- prd cdl \n"
     create_table_cdl_sql += "create table prd_cdl.{@table}_cdl ( \n"
     create_table_cdl_sql += "{@columns} \n"
     create_table_cdl_sql += ") partitioned by (batch_number string) \n"
+    create_table_cdl_sql += "STORED AS PARQUET; \n"
 
     verify_sql = "-- verify \n"
     verify_sql += "select * from prd_idl.{@table}_idl \n"
@@ -92,3 +93,8 @@ for i in allFiles:
     f_out.write(final_create_table_sql)  # python will convert \n to os.linesep
     f_out.close()
 
+    #archive
+    path = ".\\archive_table_file\\"
+    if not os.path.exists(path):
+        os.makedirs(path)
+    os.rename(i, path+i.replace(".\\",""))
