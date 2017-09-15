@@ -1,0 +1,1 @@
+cat ./* > deploy_all.sql
